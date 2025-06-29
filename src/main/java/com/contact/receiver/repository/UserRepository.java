@@ -9,7 +9,7 @@ import com.contact.receiver.entity.AppUser;
 
 
 @Repository
-public interface IUserRepository extends JpaRepository<AppUser, Long> {
+public interface UserRepository extends JpaRepository<AppUser, Long> {
 
     Optional<AppUser> findByUsername(String username);
 }

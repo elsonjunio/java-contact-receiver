@@ -2,15 +2,18 @@ package com.contact.receiver.filter;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
+import com.contact.receiver.dto.LoginResponseDTO;
 import com.contact.receiver.entity.AuthenticatedUser;
 import com.contact.receiver.service.AuthenticateService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,11 +44,43 @@ public class LoginFilter extends AbstractAuthenticationProcessingFilter {
 
     }
 
+    //@Override
+    //protected void successfulAuthentication(HttpServletRequest httpServletRequest,
+    //        HttpServletResponse httpServletResponse, FilterChain filterChain, Authentication authentication) {
+    //        //Retorna apenas Authorization no head
+    //        AuthenticateService.addJWTToken(httpServletResponse, authentication);
+    //
+    //}
+
     @Override
     protected void successfulAuthentication(HttpServletRequest httpServletRequest,
-            HttpServletResponse httpServletResponse, FilterChain filterChain, Authentication authentication) {
+            HttpServletResponse httpServletResponse, FilterChain filterChain, Authentication authentication) throws IOException {
 
-            AuthenticateService.addJWTToken(httpServletResponse, authentication);
+        String token = AuthenticateService.generateJWTToken(authentication, AuthenticateService.EXPIRATION_TOKEN_1_HOUR);
+        long expiresAt = System.currentTimeMillis() + AuthenticateService.EXPIRATION_TOKEN_1_HOUR;
+
+        List<String> roles = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList());
+
+        // Header (mantido)
+        httpServletResponse.addHeader("Authorization", "Bearer " + token);
+        httpServletResponse.addHeader("Access-Control-Expose-Headers", "Authorization");
+
+        // Body (JSON)
+        LoginResponseDTO loginResponse = LoginResponseDTO.builder()
+        .token("Bearer " + token)
+        .username(authentication.getName())
+        .roles(roles)
+        .expiresAt(expiresAt)
+        .build();
+
+        httpServletResponse.setContentType("application/json");
+        httpServletResponse.setCharacterEncoding("UTF-8");
+
+        ObjectMapper mapper = new ObjectMapper();
+
+        httpServletResponse.getWriter().write(mapper.writeValueAsString(loginResponse));
 
     }
 

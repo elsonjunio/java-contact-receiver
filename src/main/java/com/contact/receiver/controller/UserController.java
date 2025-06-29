@@ -9,12 +9,25 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.contact.receiver.dto.UserPatchDTO;
+import com.contact.receiver.dto.UserRequestDTO;
+import com.contact.receiver.dto.UserResponseDTO;
 import com.contact.receiver.entity.AppUser;
+import com.contact.receiver.entity.Role;
+import com.contact.receiver.mapper.UserMapper;
+import com.contact.receiver.service.RoleService;
 import com.contact.receiver.service.UserService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.domain.Sort;
 
 @RestController
 @RequestMapping("/users")
@@ -23,29 +36,81 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private RoleService roleService;
+
+    @Autowired
+    private UserMapper userMapper;
+
     @PostMapping
-    public ResponseEntity<String> saveUser(@RequestBody AppUser user) {
+    public ResponseEntity<UserResponseDTO> saveUser(@RequestBody UserRequestDTO dto) {
+
+        List<Role> roles = roleService.findByNames(dto.getRoles());
+
+        AppUser user = userMapper.toEntity(dto, roles);
 
         AppUser createdUser = userService.saveUser(user);
 
-        return new ResponseEntity<String>("Created user: " + createdUser.getUsername(), HttpStatus.CREATED);
-    }
-
-    @PutMapping
-    public ResponseEntity<String> updateUser(@RequestBody AppUser user) {
-        AppUser updatedUser = userService.saveUser(user);
-        return new ResponseEntity<String>("Created user: " + updatedUser.getUsername(), HttpStatus.OK);
+        UserResponseDTO userResponse = userMapper.toResponseDTO(createdUser);
+        return new ResponseEntity<UserResponseDTO>(userResponse, HttpStatus.OK);
     }
 
     @GetMapping
-    public ResponseEntity<List<AppUser>> getAllUsers() {
-        
-        return new ResponseEntity<List<AppUser>>(userService.getAllUsers(), HttpStatus.OK);
+    public ResponseEntity<Page<UserResponseDTO>> getAllUsers(
+        @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
+
+        Page<AppUser> page = userService.getAllUsers(pageable);
+
+        Page<UserResponseDTO> response = page.map(userMapper::toResponseDTO);
+
+        return new ResponseEntity<Page<UserResponseDTO> >(response, HttpStatus.OK);
     }
 
-    @DeleteMapping
-    public void deleteUser(@RequestBody AppUser user){
-        userService.deleteUser(user);
+    @GetMapping("/{id}")
+    public ResponseEntity<UserResponseDTO> getUser(@PathVariable Long id) {
+
+        AppUser user = userService.getUserById(id);
+
+        UserResponseDTO userResponse = userMapper.toResponseDTO(user);
+
+        return new ResponseEntity<UserResponseDTO>(userResponse, HttpStatus.OK);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<UserResponseDTO> updateUser(@PathVariable Long id, @RequestBody UserRequestDTO dto) {
+
+        AppUser existingUser = userService.getUserById(id);
+
+        List<Role> roles = roleService.findByNames(dto.getRoles());
+
+        AppUser user = userMapper.toEntity(dto, roles);
+
+        AppUser updatedUser = userService.applyUpdate(existingUser, user);
+
+        UserResponseDTO userResponse = userMapper.toResponseDTO(updatedUser);
+
+        return new ResponseEntity<UserResponseDTO>(userResponse, HttpStatus.OK);
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<UserResponseDTO> patchUser(@PathVariable Long id, @RequestBody UserPatchDTO dto) {
+        AppUser existingUser = userService.getUserById(id);
+        List<Role> roles = roleService.findByNames(dto.getRoles());
+        AppUser patchedUser = userMapper.patchEntity(dto, roles, existingUser);
+
+        AppUser updatedUser = userService.applyUpdate(existingUser, patchedUser);
+
+        UserResponseDTO userResponse = userMapper.toResponseDTO(updatedUser);
+
+        return new ResponseEntity<UserResponseDTO>(userResponse, HttpStatus.OK);
+
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
+
+        return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
     }
 
 }

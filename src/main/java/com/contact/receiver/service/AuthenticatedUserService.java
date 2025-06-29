@@ -13,14 +13,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import com.contact.receiver.entity.AppUser;
-import com.contact.receiver.repository.IUserRepository;
+import com.contact.receiver.repository.UserRepository;
 
 @Service
 @Transactional
 public class AuthenticatedUserService implements UserDetailsService{
 
     @Autowired
-    private IUserRepository iUserRepository;
+    private UserRepository iUserRepository;
 
     public UserDetails loadUserByUsername(String username) {
         AppUser user = iUserRepository.findByUsername(username)

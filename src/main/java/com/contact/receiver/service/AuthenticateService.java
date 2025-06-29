@@ -18,19 +18,15 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-
-
-
 public class AuthenticateService {
 
     private static final String HEADER_BEARER = "Bearer ";
     private static final String HEADER_ATHORIZATION = "Authorization";
     private static final String BASE64ENCODEDSECRETKEY = "signinKey";
     private static final String CLAIMS_KEY = "authorities";
-    private static final long EXPIRATION_TOKEN_1_HOUR = 3600000;
+    public static final long EXPIRATION_TOKEN_1_HOUR = 3600000L;
 
-
-    static public void addJWTToken(HttpServletResponse response, Authentication authentication) {
+    static public String generateJWTToken(Authentication authentication, long expirationMillis) {
 
         Map<String, Object> claims = new HashMap<>();
 
@@ -41,13 +37,16 @@ public class AuthenticateService {
                         .map(GrantedAuthority::getAuthority)
                         .collect(Collectors.toList()));
 
-        String jwtToken = Jwts.builder()
+        return Jwts.builder()
                 .setSubject(authentication.getName())
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TOKEN_1_HOUR))
+                .setExpiration(new Date(System.currentTimeMillis() + expirationMillis))
                 .signWith(SignatureAlgorithm.HS512, BASE64ENCODEDSECRETKEY)
                 .addClaims(claims)
                 .compact();
+    }
 
+    static public void addJWTToken(HttpServletResponse response, Authentication authentication) {
+        String jwtToken = generateJWTToken(authentication, EXPIRATION_TOKEN_1_HOUR);
         response.addHeader(HEADER_ATHORIZATION, HEADER_BEARER + jwtToken);
         response.addHeader("Access-Control-Expose-Headers", HEADER_ATHORIZATION);
     }
@@ -63,8 +62,16 @@ public class AuthenticateService {
 
             if (user != null) {
 
-                List<SimpleGrantedAuthority> roles = ((ArrayList<String>) user.get(CLAIMS_KEY)).stream()
-                        .map(SimpleGrantedAuthority::new).toList();
+                Object rolesObject = user.get(CLAIMS_KEY);
+                List<SimpleGrantedAuthority> roles = new ArrayList<>();
+
+                if (rolesObject instanceof List<?>) {
+                    roles = ((List<?>) rolesObject).stream()
+                            .filter(String.class::isInstance)
+                            .map(String.class::cast)
+                            .map(SimpleGrantedAuthority::new)
+                            .toList();
+                }
 
                 return new UsernamePasswordAuthenticationToken(user, null, roles);
             }

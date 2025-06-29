@@ -3,7 +3,6 @@ package com.contact.receiver.entity;
 import java.io.Serializable;
 import java.util.List;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -24,7 +23,7 @@ import lombok.Setter;
 @Data
 @Getter
 @Setter
-public class AppUser implements Serializable{
+public class AppUser implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -39,8 +38,8 @@ public class AppUser implements Serializable{
     private String password;
 
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "users_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"),
-    uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "role_id"}))
+    @JoinTable(name = "users_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"), uniqueConstraints = @UniqueConstraint(columnNames = {
+            "user_id", "role_id" }))
     private List<Role> roles;
 
 }
