@@ -111,4 +111,8 @@ public class UserService {
         return userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
     }
 
+    public Page<AppUser> searchUsersByUsername(String username, Pageable pageable) {
+        return userRepository.findByUsernameContainingIgnoreCase(username, pageable);
+    }
+
 }
