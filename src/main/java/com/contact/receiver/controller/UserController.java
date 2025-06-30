@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.contact.receiver.dto.UserPatchDTO;
@@ -57,13 +58,13 @@ public class UserController {
 
     @GetMapping
     public ResponseEntity<Page<UserResponseDTO>> getAllUsers(
-        @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
+            @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
 
         Page<AppUser> page = userService.getAllUsers(pageable);
 
         Page<UserResponseDTO> response = page.map(userMapper::toResponseDTO);
 
-        return new ResponseEntity<Page<UserResponseDTO> >(response, HttpStatus.OK);
+        return new ResponseEntity<Page<UserResponseDTO>>(response, HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
@@ -103,7 +104,6 @@ public class UserController {
         UserResponseDTO userResponse = userMapper.toResponseDTO(updatedUser);
 
         return new ResponseEntity<UserResponseDTO>(userResponse, HttpStatus.OK);
-
     }
 
     @DeleteMapping("/{id}")
@@ -111,6 +111,18 @@ public class UserController {
         userService.deleteUser(id);
 
         return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<Page<UserResponseDTO>> searchUsersByUsername(
+            @RequestParam String username,
+            @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
+
+        Page<AppUser> page = userService.searchUsersByUsername(username, pageable);
+
+        Page<UserResponseDTO> response = page.map(userMapper::toResponseDTO);
+
+        return new ResponseEntity<Page<UserResponseDTO>>(response, HttpStatus.OK);
     }
 
 }
