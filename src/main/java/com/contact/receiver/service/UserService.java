@@ -108,11 +108,32 @@ public class UserService {
     }
 
     public AppUser getUserById(Long id) {
-        return userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+
+        boolean isAdmin = securityService.isAuthenticatedUserAdmin();
+        String currentUsername = securityService.getAuthenticatedUsername();
+
+        AppUser existingUser = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+
+        // ✅ Verifica se pode ver: ADMIN ou o próprio usuário
+        boolean isSameUser = currentUsername.equals(existingUser.getUsername());
+        if (!isAdmin && !isSameUser) {
+            throw new AccessDeniedException("You do not have permission to view this user.");
+        }
+
+        return existingUser;
     }
 
     public Page<AppUser> searchUsersByUsername(String username, Pageable pageable) {
         return userRepository.findByUsernameContainingIgnoreCase(username, pageable);
     }
+
+    public AppUser getCurrentUser() {
+
+        String currentUsername = securityService.getAuthenticatedUsername();
+
+        AppUser existingUser = userRepository.findByUsername(currentUsername).orElseThrow(() -> new RuntimeException("User not found"));
+
+        return existingUser;
+    } 
 
 }

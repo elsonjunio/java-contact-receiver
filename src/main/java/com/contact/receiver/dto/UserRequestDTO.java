@@ -5,18 +5,18 @@ import java.util.List;
 import com.contact.receiver.permissions.RoleEnum;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
 public class UserRequestDTO {
-    @NotBlank
+    @NotBlank(message = "{invalid.username}")
+    @Size(min = 3, max = 20, message = "{invalid.username.size}")
     private String username;
 
-    @NotBlank
     private String password;
 
-    @NotBlank
     private List<RoleEnum> roles;
 }
