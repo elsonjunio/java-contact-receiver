@@ -18,6 +18,9 @@ import com.contact.receiver.entity.Role;
 import com.contact.receiver.mapper.UserMapper;
 import com.contact.receiver.service.RoleService;
 import com.contact.receiver.service.UserService;
+
+import jakarta.validation.Valid;
+
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -44,7 +47,7 @@ public class UserController {
     private UserMapper userMapper;
 
     @PostMapping
-    public ResponseEntity<UserResponseDTO> saveUser(@RequestBody UserRequestDTO dto) {
+    public ResponseEntity<UserResponseDTO> saveUser(@Valid @RequestBody UserRequestDTO dto) {
 
         List<Role> roles = roleService.findByNames(dto.getRoles());
 
@@ -123,6 +126,16 @@ public class UserController {
         Page<UserResponseDTO> response = page.map(userMapper::toResponseDTO);
 
         return new ResponseEntity<Page<UserResponseDTO>>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserResponseDTO> getCurrentUser() {
+
+        AppUser user = userService.getCurrentUser();
+
+        UserResponseDTO userResponse = userMapper.toResponseDTO(user);
+
+        return new ResponseEntity<UserResponseDTO>(userResponse, HttpStatus.OK);
     }
 
 }

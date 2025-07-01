@@ -39,10 +39,14 @@ public class SecurityConfiguration{
         .authorizeHttpRequests(auth -> {
             auth.requestMatchers("/login").permitAll()
             .requestMatchers(HttpMethod.GET, "live").permitAll()
-            .requestMatchers(HttpMethod.GET, "/user").authenticated()
-            .requestMatchers(HttpMethod.PUT, "/user").authenticated()
-            .requestMatchers(HttpMethod.POST, "/user").hasAnyAuthority(RoleEnum.ADMIN.toString())
-            .requestMatchers(HttpMethod.DELETE, "/user").hasAnyAuthority(RoleEnum.ADMIN.toString())
+            .requestMatchers(HttpMethod.GET, "/users").hasAnyAuthority(RoleEnum.ADMIN.toString()) // Get all user
+            .requestMatchers(HttpMethod.GET, "/users/{id:[0-9]+}").authenticated() // Get by ID
+            .requestMatchers(HttpMethod.GET, "/users/search").hasAnyAuthority(RoleEnum.ADMIN.toString()) // Get using search
+            .requestMatchers(HttpMethod.GET, "/users/me").authenticated()
+            .requestMatchers(HttpMethod.PUT, "/users").authenticated()
+            .requestMatchers(HttpMethod.PATCH, "/users").authenticated()
+            .requestMatchers(HttpMethod.POST, "/users").hasAnyAuthority(RoleEnum.ADMIN.toString())
+            .requestMatchers(HttpMethod.DELETE, "/users").hasAnyAuthority(RoleEnum.ADMIN.toString())
             .anyRequest().authenticated();
         });
 

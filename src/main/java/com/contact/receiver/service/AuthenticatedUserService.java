@@ -20,10 +20,10 @@ import com.contact.receiver.repository.UserRepository;
 public class AuthenticatedUserService implements UserDetailsService{
 
     @Autowired
-    private UserRepository iUserRepository;
+    private UserRepository userRepository;
 
     public UserDetails loadUserByUsername(String username) {
-        AppUser user = iUserRepository.findByUsername(username)
+        AppUser user = userRepository.findByUsername(username)
         .orElseThrow(() -> new UsernameNotFoundException("User " + username + "not found"));
 
         List<SimpleGrantedAuthority> roles = user.getRoles()
